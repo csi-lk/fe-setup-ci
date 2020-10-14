@@ -1,0 +1,29 @@
+name: "fe-setup-ci"
+description: "Runs all tasks to setup your CI run"
+runs:
+  using: "composite"
+  steps:
+    - name: "Checkout"
+      uses: actions/checkout@v1
+    - name: "Cache yarn"
+      uses: actions/cache@v1
+      with:
+        path: ~/.cache/yarn
+        key: ${{ runner.os }}-yarn-${{ hashFiles('yarn.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-yarn-
+    - name: "Cache node_modules"
+      uses: actions/cache@v1
+      with:
+        path: ${{ github.workspace }}/node_modules
+        key: ${{ runner.os }}-node_modules-${{ hashFiles('yarn.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-node_modules-
+    - name: "Setup registry"
+      run: |
+        echo "//npm.pkg.github.com/:_authToken=$GITHUB_TOKEN" >> ~/.npmrc 2> /dev/null
+        echo "@hopin-team:registry=https://npm.pkg.github.com/" >> ~/.npmrc 2> /dev/null
+      env:
+        GITHUB_TOKEN: ${{ secrets.ADMIN_GH_TOKEN }}
+    - name: "Install dependencies"
+      run: yarn install --frozen-lockfile
